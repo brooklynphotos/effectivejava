@@ -24,16 +24,16 @@ public class RunTests {
                 }
             } else if (m.isAnnotationPresent(ExceptionTest.class)) {
                 tests++;
-                Class<? extends Throwable> expectedException = m.getAnnotation(ExceptionTest.class).value();
+                Class<? extends Throwable>[] expectedExceptions = m.getAnnotation(ExceptionTest.class).value();
                 try {
                     m.invoke(null);
-                    System.out.printf("Failed test %s, was expecting exception %s%n",m, expectedException);
+                    System.out.printf("Failed test %s, was expecting one of the %d exceptions%n",m, expectedExceptions.length);
                 } catch (InvocationTargetException ie) {
                     Throwable exc = ie.getCause();
-                    if (expectedException.isInstance(exc)) {
+                    if (contains(expectedExceptions, exc)) {
                         passed++;
                     } else {
-                        System.out.printf("Test %s failed: expected %s but got %s%n", m, expectedException.getName(), exc);
+                        System.out.printf("Test %s failed: none of the %d exceptions were found: %s%n", m, expectedExceptions.length, exc);
                     }
                 } catch (IllegalAccessException e) {
                     System.out.println("Not allowed to run method: " + m);
@@ -44,5 +44,14 @@ public class RunTests {
             }
         }
         System.out.printf("Passed: %d, Failed: %d%n", passed, tests-passed);
+    }
+
+    private static final boolean contains(final Class<? extends Throwable>[] expectedExceptions, final Throwable exc){
+        for (Class<? extends Throwable> ex : expectedExceptions) {
+            if (ex.isInstance(exc)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
